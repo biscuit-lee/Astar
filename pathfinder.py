@@ -26,6 +26,7 @@ def main():
     goalFont =myfont.render("Goal",False,(0,0,0)) 
     obFont =myfont.render("Obstacle",False,(0,0,0)) 
     pg.init()
+    mode = 1
     screen = pg.display.set_mode([400,300])
     createGrid(13,13)
 
@@ -90,8 +91,37 @@ class Button():
         self.color = color
         rect = pg.Rect(posx,posy,width,height)
         pg.draw.rect(screen,color,rect)
-        
-    
+
+# node class for all the nodes in grid      
+class Node():
+    def __init__(self,position=None,parent=None):
+        self.position = position
+        self.parent = parent
+
+        self.f = 0
+        self.h = 0
+        self.g = 0
+
+
+def pathfinder(grid,start_pos,goal_pos):
+    # open list and close list
+    open_list = []
+    close_list = []
+
+    # make the start and goal an object
+    start = Node(start_pos)
+    goal = Node(goal_pos)
+
+    open_list.append(start)
+    while (len(open_list) > 0):
+        current = open_list[0]
+        for count,item in enumerate(open_list):
+            if item.f < current.f:
+                close_list.append(current)
+                current = item
+                open_list.pop(count)
+                
+
 #draw the grids on the window
 def drawGrid(win,color,size,sx,sy,grid):
     syy = 0
