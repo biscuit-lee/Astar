@@ -16,15 +16,18 @@ RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
 YELLOW = (255,255,0)
+PURPLE = (255,0,255)
 
 def main():
     # window
     pg.font.init()
     #define font
     myfont = pg.font.SysFont('Comic Sans MS', 11)
-    startFont = myfont.render("Start",False,(0,0,0))
-    goalFont = myfont.render("Goal",False,(0,0,0)) 
-    obFont = myfont.render("Simulate",False,(0,0,0)) 
+    startFont = myfont.render("set start",False,(0,0,0))
+    goalFont = myfont.render("set goal",False,(0,0,0)) 
+    obFont = myfont.render("Simulate",False,(0,0,0))
+    erase = myfont.render("Clear",False,(0,0,0))
+
     pg.init()
     mode = 1
     screen = pg.display.set_mode([400,300])
@@ -32,15 +35,13 @@ def main():
 
     run = True
     while run:
-        #drawGrid(screen,BLACK,30)
         for event in pg.event.get():
 
             if event.type==pg.QUIT:
                 run=False
             else:
                 
-                
-                #if event.type==pg.NOUSEBUTTONDOWN:
+                # drawing mechanics
                 if pg.mouse.get_pressed()[0]:
 
                     pos = pg.mouse.get_pos()
@@ -64,25 +65,30 @@ def main():
                             start_pos = find_start(grid)
                             goal_pos = find_goal(grid)
                             pathfinder(grid,start_pos,goal_pos)
+                        # erase button
+                        elif (350 < pos[0] < 390) and (20 < pos[1] < 265):
+                            clear(grid)
         screen.fill(WHITE)
         
         drawGrid(screen,BLACK,20,5,5,grid)
         
         # draw text + buttons
         screen.blit(startFont,(350,5))
-        startButton = Button(40,30,2,350,20,screen,GREEN)
+        startButton = Button(40,30,2,350,25,screen,GREEN)
 
         screen.blit(goalFont,(350,75))
-        goalButton = Button(40,30,3,350,100,screen,YELLOW)
+        goalButton = Button(40,30,3,350,95,screen,YELLOW)
         
-        screen.blit(obFont,(350,150))
-        obButton = Button(40,30,1,350,180,screen,RED)
+        screen.blit(obFont,(350,145))
+        obButton = Button(40,30,1,350,165,screen,RED)
 
+        screen.blit(erase,(350,215))
+        clearButton = Button(40,30,0,350,235,screen,BLACK)
         
 
         pg.display.update()
 
-#class for all the drawing buttons
+# class for all the drawing buttons
 class Button():
     def __init__(self,width,height,mode,posx,posy,screen,color):
         self.width = width
@@ -140,14 +146,15 @@ def pathfinder(grid,start_pos,goal_pos):
     start.f = start.h
     open_list.append(start)
     current = open_list[0]
+    
     while (len(open_list) > 0):
         # find node with lowest f value and make it curreent note to expand on later 
         for count,item in enumerate(open_list):
-            if item.f < current.f:
+            if item.f <= current.f:
                 current = item
                 close_list.append(current)
                 open_list.pop(count)
-        
+
         # if found goal
         if current == goal:
             # reverse the path and color it
@@ -158,34 +165,38 @@ def pathfinder(grid,start_pos,goal_pos):
                 grid[tmp.position[0]][tmp.position[1]] = 4
                 tmp = tmp.parent
             break
+        #print(open_list)
         # generate child
         for child in children_pos:
-                y_pos = child[0] + current.position[0]
-                x_pos = child[1] + current.position[1]
+            #test.(current.position)
+           
+            y_pos = child[0] + current.position[0]
+            x_pos = child[1] + current.position[1]
 
-                if 13 < x_pos or x_pos < 0:
+            if 13 < x_pos or x_pos < 0:
+                continue
+            if 13 < y_pos or y_pos < 0:
+                continue
+
+            childNode = Node((y_pos,x_pos),current)
+            # check if child is already visited 
+            for node in close_list:
+                if node == childNode:
                     continue
-                if 13 < y_pos or y_pos < 0:
-                    continue
+            # check if child is an obstable
+            if grid[y_pos][x_pos] == 1:
+                continue
 
-                childNode = Node((y_pos,x_pos),current)
-                # check if child is already visited 
-                for node in close_list:
-                    if node == childNode:
-                        continue
-
-                childNode.g = (abs(start.position[0] - childNode.position[0])**2) + (abs(start.position[1] - childNode.position[1])**2)
-                childNode.h = (abs(goal.position[0] - childNode.position[0])**2) + (abs(goal.position[1] - childNode.position[1])**2)
-                childNode.f = childNode.h
-                
-                # check if child is in openlist
-                for node in open_list:
-                    if node == childNode:
-                            if childNode.f > current.f:
-                     
-                                continue
-                    
-                open_list.append(childNode)
+            childNode.g = current.g + 1
+            childNode.h = (abs(goal.position[0] - childNode.position[0])**2) + (abs(goal.position[1] - childNode.position[1])**2)
+            childNode.f = childNode.h + childNode.g
+            
+            # check if child is in openlist
+            for node in open_list:
+                if node == childNode:
+                        if childNode.f > current.f:
+                            continue
+            open_list.append(childNode)
 
 #draw the grids on the window
 def drawGrid(win,color,size,sx,sy,grid):
@@ -209,7 +220,13 @@ def drawGrid(win,color,size,sx,sy,grid):
             sxx+=sx
 
         syy+=sy
-    
+
+# clear grid
+def clear(grid):
+    for i in range(len(grid)):
+        for z in range(len(grid)):
+            grid[i][z] = 0
+
 #function that creates 2d list of the map
 def createGrid(colDim,rowDim):
     global grid
